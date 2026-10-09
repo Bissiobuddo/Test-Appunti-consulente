@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Circle, Headphones, LoaderCircle, Mic, Pause, Play, Square, TriangleAlert, Upload } from "lucide-react";
 import { dictationSupported, useDictation } from "../lib/useDictation.ts";
 import { extensionFor, listMicrophones, useRecorder } from "../lib/useRecorder.ts";
 import { transcribe } from "../lib/api.ts";
@@ -11,7 +12,7 @@ interface Props {
 
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
-/** Pulsantoni per dettare, registrare o caricare audio: pensati per l'uso in auto. */
+/** Pulsanti grandi per dettare, registrare o caricare audio: pensati per l'uso in auto. */
 export function Capture({ transcriptionAvailable, onText }: Props) {
   const dictation = useDictation(onText);
   const recorder = useRecorder();
@@ -49,52 +50,73 @@ export function Capture({ transcriptionAvailable, onText }: Props) {
 
   const active = dictation.listening || recorder.recording;
   const shownError = error ?? dictation.error ?? recorder.error;
+  const disabledReason = (ok: boolean, why: string) => (ok ? undefined : why);
 
   return (
-    <section className="capture">
+    <section className="capture card">
       <div className="capture-buttons">
         {!recorder.recording && (
           <button
-            className={`big-btn ${dictation.listening ? "live" : ""}`}
+            className={`capture-tile dict ${dictation.listening ? "live" : ""}`}
             onClick={dictation.listening ? dictation.stop : dictation.start}
             disabled={!dictationSupported || Boolean(busy)}
-            title={dictationSupported ? "" : "Non supportata da questo browser"}
+            title={disabledReason(dictationSupported, "Dettatura non supportata da questo browser")}
+            aria-pressed={dictation.listening}
           >
-            <span className="big-icon">{dictation.listening ? "■" : "🎙️"}</span>
-            {dictation.listening ? "Stop dettatura" : "Detta"}
+            <span className="tile-icon">{dictation.listening ? <Square size={24} fill="currentColor" /> : <Mic size={28} />}</span>
+            {dictation.listening ? "Tocca per fermare" : "Detta"}
+            {!dictation.listening && <small>Testo dal vivo</small>}
           </button>
         )}
         {!dictation.listening && (
           <button
-            className={`big-btn rec ${recorder.recording ? "live" : ""}`}
+            className={`capture-tile rec ${recorder.recording ? "live" : ""}`}
             onClick={recorder.recording ? stopRecording : () => recorder.start(micId || undefined)}
             disabled={!transcriptionAvailable || Boolean(busy)}
-            title={transcriptionAvailable ? "" : "Trascrizione file non configurata sul server"}
+            title={disabledReason(transcriptionAvailable, "Trascrizione file non configurata sul server")}
+            aria-pressed={recorder.recording}
           >
-            <span className="big-icon">{recorder.recording ? "■" : "⏺"}</span>
-            {recorder.recording ? `Stop ${fmt(recorder.seconds)}` : "Registra"}
+            <span className="tile-icon">
+              {recorder.recording ? <Square size={24} fill="currentColor" /> : <Circle size={26} fill="currentColor" />}
+            </span>
+            {recorder.recording ? `Stop · ${fmt(recorder.seconds)}` : "Registra"}
+            {!recorder.recording && <small>Trascrive alla fine</small>}
           </button>
         )}
       </div>
 
+      {active && (
+        <div className={`wave ${recorder.recording ? "rec" : ""} ${recorder.paused ? "paused" : ""}`} aria-hidden>
+          {Array.from({ length: 7 }, (_, i) => (
+            <span key={i} />
+          ))}
+        </div>
+      )}
       {dictation.listening && (
         <p className="interim" aria-live="polite">
-          {dictation.interim || "In ascolto… parla pure, si riavvia da solo dopo le pause."}
+          {dictation.interim || "In ascolto… parla pure, riprende da solo dopo le pause"}
         </p>
       )}
       {recorder.recording && (
-        <button className="secondary" onClick={recorder.togglePause}>
-          {recorder.paused ? "▶ Riprendi" : "⏸ Pausa"}
-        </button>
+        <div className="row" style={{ justifyContent: "center" }}>
+          <button className="chip" onClick={recorder.togglePause}>
+            {recorder.paused ? <Play size={18} /> : <Pause size={18} />}
+            {recorder.paused ? "Riprendi" : "Pausa"}
+          </button>
+        </div>
       )}
 
       {!active && (
         <div className="capture-extra">
+          <button className="chip" onClick={() => fileRef.current?.click()} disabled={!transcriptionAvailable || Boolean(busy)}>
+            <Upload size={18} /> Carica audio
+          </button>
           {transcriptionAvailable && mics.length > 1 && (
-            <label>
-              Microfono{" "}
-              <select value={micId} onChange={(e) => setMicId(e.target.value)}>
-                <option value="">Predefinito di sistema</option>
+            <label className="select-wrap">
+              <Headphones size={16} aria-hidden />
+              <span className="sr-only">Microfono</span>
+              <select value={micId} onChange={(e) => setMicId(e.target.value)} aria-label="Microfono">
+                <option value="">Microfono predefinito</option>
                 {mics.map((m, i) => (
                   <option key={m.deviceId} value={m.deviceId}>
                     {m.label || `Microfono ${i + 1}`}
@@ -103,9 +125,6 @@ export function Capture({ transcriptionAvailable, onText }: Props) {
               </select>
             </label>
           )}
-          <button className="secondary" onClick={() => fileRef.current?.click()} disabled={!transcriptionAvailable || Boolean(busy)}>
-            📁 Carica file audio
-          </button>
           <input
             ref={fileRef}
             type="file"
@@ -120,8 +139,16 @@ export function Capture({ transcriptionAvailable, onText }: Props) {
         </div>
       )}
 
-      {busy && <p className="status">{busy}</p>}
-      {shownError && <p className="error">{shownError}</p>}
+      {busy && (
+        <p className="msg status">
+          <LoaderCircle size={18} className="spin" /> {busy}
+        </p>
+      )}
+      {shownError && (
+        <p className="msg error">
+          <TriangleAlert size={18} /> {shownError}
+        </p>
+      )}
     </section>
   );
 }

@@ -166,7 +166,11 @@ export function exportSvg(svg: SVGSVGElement, note: Note) {
   clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
   clone.setAttribute("width", String(Math.round(width)));
   clone.setAttribute("height", String(Math.round(height)));
+  // Colori fissi: il file esportato è sempre su sfondo bianco, anche se l'app è in modalità scura.
   clone.style.background = "#ffffff";
+  clone.style.setProperty("--markmap-text-color", "#141625");
+  clone.style.setProperty("--markmap-circle-open-bg", "#ffffff");
+  clone.style.setProperty("--markmap-font", "500 15px/20px system-ui, sans-serif");
   const data = new XMLSerializer().serializeToString(clone);
   return deliver(new Blob([data], { type: "image/svg+xml" }), `${nameOf(note)}-mappa.svg`);
 }

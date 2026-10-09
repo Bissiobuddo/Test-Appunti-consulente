@@ -17,7 +17,7 @@ export const MindMap = forwardRef<MindMapHandle, { markdown: string }>(function 
 
   useEffect(() => {
     if (!svgRef.current) return;
-    const mm = Markmap.create(svgRef.current, { autoFit: true, duration: 300, maxWidth: 220, initialExpandLevel: 2 });
+    const mm = Markmap.create(svgRef.current, { autoFit: true, duration: 300, maxWidth: 220, initialExpandLevel: 3 });
     mmRef.current = mm;
     return () => {
       mm.destroy();

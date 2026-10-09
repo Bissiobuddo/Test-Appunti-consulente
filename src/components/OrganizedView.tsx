@@ -1,3 +1,4 @@
+import { ListTodo, PenLine, Sparkles, TriangleAlert } from "lucide-react";
 import type { OrganizedNote } from "../lib/types.ts";
 
 interface Props {
@@ -23,7 +24,7 @@ function Editable({ text, onSave }: { text: string; onSave: (t: string) => void 
 
 const AiBadge = () => (
   <span className="ai-badge" title="Aggiunto dall'AI, non presente nel parlato">
-    ✦ AI
+    <Sparkles size={11} aria-hidden /> AI
   </span>
 );
 
@@ -35,7 +36,7 @@ export function OrganizedView({ data, onChange }: Props) {
   };
 
   return (
-    <article className="organized">
+    <article className="organized card">
       <h2>
         <Editable text={data.title} onSave={(t) => update((d) => void (d.title = t))} />
       </h2>
@@ -74,7 +75,9 @@ export function OrganizedView({ data, onChange }: Props) {
 
       {data.action_items.length > 0 && (
         <section className="box todo">
-          <h3>✅ Da fare</h3>
+          <h3>
+            <span className="box-icon"><ListTodo size={17} /></span> Da fare
+          </h3>
           <ul>
             {data.action_items.map((a, i) => (
               <li key={i}>{a}</li>
@@ -85,7 +88,9 @@ export function OrganizedView({ data, onChange }: Props) {
 
       {data.unclear_passages.length > 0 && (
         <section className="box unclear">
-          <h3>⚠️ Da verificare</h3>
+          <h3>
+            <span className="box-icon"><TriangleAlert size={17} /></span> Da verificare
+          </h3>
           <p className="hint">Passaggi poco chiari: l'AI non ne ha inventato il significato.</p>
           <ul>
             {data.unclear_passages.map((u, i) => (
@@ -97,7 +102,9 @@ export function OrganizedView({ data, onChange }: Props) {
 
       {data.corrections.length > 0 && (
         <details className="box corrections">
-          <summary>✏️ Correzioni applicate ({data.corrections.length})</summary>
+          <summary>
+            <span className="box-icon"><PenLine size={17} /></span> Correzioni applicate ({data.corrections.length})
+          </summary>
           <ul>
             {data.corrections.map((c, i) => (
               <li key={i}>

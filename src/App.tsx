@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { ChevronRight, CloudOff, FileText, LoaderCircle, LockKeyhole, Mic, Plus, Search, Sparkles, TriangleAlert } from "lucide-react";
+import { ChevronRight, CloudOff, KeyRound, Settings as SettingsIcon, FileText, LoaderCircle, LockKeyhole, Mic, Plus, Search, Sparkles, TriangleAlert } from "lucide-react";
 import { NoteEditor } from "./components/NoteEditor.tsx";
+import { Settings } from "./components/Settings.tsx";
+import { isNative } from "./lib/platform.ts";
 import { checkPassword, fetchConfig, getPassword, setPassword, type ServerConfig } from "./lib/api.ts";
 import { deleteNote, getNote, listNotes, newNote, saveNote } from "./lib/storage.ts";
 import type { Note } from "./lib/types.ts";
@@ -46,8 +48,9 @@ export function App() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [current, setCurrent] = useState<Note | null>(null);
   const [query, setQuery] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
 
-  useEffect(() => {
+  const loadConfig = () =>
     fetchConfig()
       .then(async (c) => {
         setConfig(c);
@@ -59,7 +62,7 @@ export function App() {
         setConfig(OFFLINE);
         setAuthed(true);
       });
-  }, []);
+  useEffect(() => void loadConfig(), []);
 
   const refresh = () => void listNotes().then(setNotes);
   useEffect(refresh, [current]);
@@ -71,6 +74,17 @@ export function App() {
       </p>
     );
   if (!authed) return <Login onOk={() => setAuthed(true)} />;
+
+  if (showSettings) {
+    return (
+      <Settings
+        onClose={() => {
+          setShowSettings(false);
+          void loadConfig();
+        }}
+      />
+    );
+  }
 
   if (current) {
     return (
@@ -102,7 +116,24 @@ export function App() {
           </h1>
           <p>Parla, all'ordine pensa l'AI</p>
         </div>
+        {isNative && (
+          <button className="icon-btn" onClick={() => setShowSettings(true)} aria-label="Impostazioni">
+            <SettingsIcon size={20} />
+          </button>
+        )}
       </header>
+      {isNative && !config.aiAvailable && (
+        <button className="setup-banner card" onClick={() => setShowSettings(true)}>
+          <span className="box-icon ic-violet">
+            <KeyRound size={17} />
+          </span>
+          <span>
+            Collega l'AI
+            <small>Inserisci la tua chiave Claude per organizzare gli appunti</small>
+          </span>
+          <ChevronRight size={20} className="chev" style={{ marginLeft: "auto" }} />
+        </button>
+      )}
       {config === OFFLINE && (
         <p className="msg error">
           <CloudOff size={18} /> Server non raggiungibile: puoi solo consultare gli appunti salvati.

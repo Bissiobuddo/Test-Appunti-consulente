@@ -3,3 +3,5 @@ dist
 dev-dist
 .env
 *.log
+android/app/build
+android/.gradle

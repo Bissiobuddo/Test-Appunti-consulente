@@ -308,3 +308,17 @@ svg.mindmap.markmap {
   --markmap-circle-open-bg: var(--surface-solid);
   --markmap-font: 500 15px/20px "Inter Variable", system-ui, sans-serif;
 }
+
+/* ——— Impostazioni ——— */
+.topbar-title { margin: 0; font-size: 1.2rem; font-weight: 700; }
+.settings-card { padding: 6px 16px 16px; margin-top: 14px; display: flex; flex-direction: column; gap: 12px; }
+.settings-card h2 { display: flex; align-items: center; gap: 10px; font-size: 1rem; margin: 12px 0 0; }
+.settings-card .hint { margin: 0; }
+.field { display: flex; flex-direction: column; gap: 6px; font-size: 0.88rem; font-weight: 600; color: var(--muted); }
+.link { display: inline-flex; align-items: center; gap: 4px; color: var(--primary); font-size: 0.88rem; font-weight: 550; text-decoration: none; }
+.privacy { display: flex; gap: 8px; align-items: flex-start; margin: 18px 4px; }
+.setup-banner { width: 100%; justify-content: flex-start; text-align: left; gap: 12px; margin-bottom: 14px; padding: 14px; border-radius: 18px; border: 1px dashed var(--primary); }
+.setup-banner .box-icon { flex-shrink: 0; }
+.setup-banner small { display: block; color: var(--muted); font-weight: 400; }
+.home-header .icon-btn { margin-left: auto; }
+.box-icon { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; color: #fff; }

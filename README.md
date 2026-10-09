@@ -4,9 +4,27 @@ App per dettare o registrare appunti a voce (anche in auto, col microfono Blueto
 e farli organizzare dall'AI (Claude) in un elenco puntato. Gli appunti si possono esportare come
 documento o come mappa mentale.
 
-È un'unica **web app installabile (PWA)**:
-- **Android**: apri il sito con Chrome, poi dal menu ⋮ scegli **"Installa app"** / "Aggiungi a schermata Home". Si apre a schermo intero come un'app nativa.
-- **Desktop**: usi lo stesso indirizzo dal browser (Chrome, Edge…). Anche lì si può installare.
+Funziona in due modi:
+- **App Android (APK)**: si installa sul telefono e funziona da sola, senza server. Le chiavi API si inseriscono nelle Impostazioni dell'app e restano sul telefono.
+- **Sito web (PWA)**: lo pubblichi su un server e lo usi da computer o telefono, anche installandolo dal browser. Le chiavi stanno sul server.
+
+## 📱 Installare l'app Android
+
+1. Dal telefono apri la pagina **Releases** di questo repository su GitHub e scarica l'ultimo file `AppuntiVocaliAI-….apk`.
+2. Aprilo. Android chiede di consentire l'installazione di app da questa fonte (browser o file manager): accetta.
+3. Apri **Appunti Vocali AI**, tocca ⚙️ **Impostazioni** e incolla:
+   - la **chiave Claude** ([console.anthropic.com](https://console.anthropic.com/settings/keys)), per organizzare gli appunti;
+   - facoltativa, una **chiave OpenAI o Groq**, per «Registra» e «Carica audio».
+
+L'APK viene ricompilato da GitHub Actions a ogni modifica su `main`
+(file `.github/workflows/android.yml`). Le nuove versioni si installano sopra la precedente senza perdere gli appunti.
+
+> L'APK è firmato con una chiave di sviluppo inclusa nel repository (`android/app/debug.keystore`).
+> Va bene per installarlo sui propri dispositivi; per pubblicarlo sul Play Store serve una chiave di rilascio privata.
+
+Nell'app Android:
+- **Detta** usa il riconoscimento vocale di Android: scrive una frase alla volta e riparte da solo dopo ogni pausa. Su alcuni telefoni a ogni ripartenza si sente un breve segnale acustico.
+- Per dettati lunghi in auto conviene **Registra**: registra di continuo e trascrive alla fine.
 
 ## Funzioni
 
@@ -66,15 +84,26 @@ Esempio con **Render**: crea un nuovo "Web Service" collegato a questo repositor
 - La dettatura dal vivo usa il riconoscimento vocale di Google tramite Chrome, quindi serve la connessione. Se il segnale è scarso, conviene **Registra**: l'audio viene trascritto alla fine.
 - Usa l'app solo con il telefono fissato al supporto. I pulsanti sono grandi apposta per avviare e fermare la registrazione con un tocco.
 
+## Compilare l'APK in locale
+
+Servono Android Studio (o l'Android SDK) e Java 21.
+
+```bash
+npm run android       # compila il sito, lo copia nel progetto Android e apre Android Studio
+```
+
 ## Struttura
 
 ```
-server/            API Node/Express
-  ai.ts            Claude: organizzazione con output strutturato (modalità fedele/amplia)
-  transcribe.ts    Trascrizione audio (endpoint compatibile Whisper)
-  index.ts         Rotte /api/*, password, pubblicazione della build
-shared/schema.ts   Schema degli appunti organizzati (Zod), condiviso fra client e server
+server/              API Node/Express per la versione web (rotte /api/*, password)
+shared/
+  organize.ts        Claude: organizzazione con output strutturato (usata da server e app Android)
+  prompt.ts          Istruzioni per l'AI (modalità fedele/amplia)
+  transcription.ts   Trascrizione audio (endpoint compatibile Whisper)
+  schema.ts          Schema degli appunti organizzati (Zod)
 src/
-  components/      Capture (detta/registra/carica), NoteEditor, OrganizedView, MindMap
-  lib/             dettatura, registratore, archivio locale, esportazioni, formati
+  components/        Capture (detta/registra/carica), NoteEditor, OrganizedView, MindMap, Settings
+  lib/               dettatura (web e Android), registratore, archivio locale, esportazioni
+android/             Progetto Android (Capacitor)
+.github/workflows/   Compilazione automatica dell'APK
 ```

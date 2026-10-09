@@ -3,7 +3,7 @@ import multer from "multer";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Anthropic from "@anthropic-ai/sdk";
-import { organizeNote, RefusalError } from "./ai.ts";
+import { organizeNote, RefusalError } from "../shared/organize.ts";
 import { transcribeAudio, transcriptionAvailable } from "./transcribe.ts";
 import type { OrganizeRequest } from "../shared/schema.ts";
 

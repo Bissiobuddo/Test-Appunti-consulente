@@ -1,5 +1,9 @@
 import { AlignmentType, Document, HeadingLevel, Packer, Paragraph, TextRun } from "docx";
 import { jsPDF } from "jspdf";
+import { Directory, Filesystem } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
+import { isNative } from "./platform.ts";
+import { blobToBase64 } from "./base64.ts";
 import { toMarkdown, toMindmapMarkdown, toPlainText, toTree, type TreeNode } from "./format.ts";
 import type { Note } from "./types.ts";
 
@@ -19,6 +23,16 @@ const nameOf = (note: Note) => slug(note.organized?.title ?? note.title);
 
 /** Condivide il file (menu di Android: Drive, WhatsApp, email…) o, se non possibile, lo scarica. */
 export async function deliver(blob: Blob, filename: string) {
+  if (isNative) {
+    // Nell'app Android il file va scritto nella cache e poi passato al menu Condividi di sistema.
+    const { uri } = await Filesystem.writeFile({ path: filename, data: await blobToBase64(blob), directory: Directory.Cache });
+    try {
+      await Share.share({ title: filename, files: [uri] });
+    } catch (err) {
+      if (!(err instanceof Error && /cancel/i.test(err.message))) throw err;
+    }
+    return;
+  }
   const file = new File([blob], filename, { type: blob.type });
   if (navigator.canShare?.({ files: [file] })) {
     try {

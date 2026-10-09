@@ -3,12 +3,17 @@ import { Circle, Headphones, LoaderCircle, Mic, Pause, Play, Square, TriangleAle
 import { dictationSupported, useDictation } from "../lib/useDictation.ts";
 import { extensionFor, listMicrophones, useRecorder } from "../lib/useRecorder.ts";
 import { transcribe } from "../lib/api.ts";
+import { isNative } from "../lib/platform.ts";
 
 interface Props {
   transcriptionAvailable: boolean;
   /** Aggiunge testo alla trascrizione corrente. */
   onText: (text: string) => void;
 }
+
+const NO_TRANSCRIPTION = isNative
+  ? "Inserisci la chiave di trascrizione nelle Impostazioni"
+  : "Trascrizione file non configurata sul server";
 
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
@@ -73,7 +78,7 @@ export function Capture({ transcriptionAvailable, onText }: Props) {
             className={`capture-tile rec ${recorder.recording ? "live" : ""}`}
             onClick={recorder.recording ? stopRecording : () => recorder.start(micId || undefined)}
             disabled={!transcriptionAvailable || Boolean(busy)}
-            title={disabledReason(transcriptionAvailable, "Trascrizione file non configurata sul server")}
+            title={disabledReason(transcriptionAvailable, NO_TRANSCRIPTION)}
             aria-pressed={recorder.recording}
           >
             <span className="tile-icon">
@@ -138,6 +143,8 @@ export function Capture({ transcriptionAvailable, onText }: Props) {
           />
         </div>
       )}
+
+      {!active && !transcriptionAvailable && <p className="hint">«Registra» e «Carica audio» richiedono la trascrizione: {NO_TRANSCRIPTION.toLowerCase()}.</p>}
 
       {busy && (
         <p className="msg status">

@@ -10,6 +10,7 @@ import type { MindMapHandle } from "./MindMap.tsx";
 import { organize, type ServerConfig } from "../lib/api.ts";
 import { toMindmapMarkdown } from "../lib/format.ts";
 import { saveNote } from "../lib/storage.ts";
+import { isNative } from "../lib/platform.ts";
 import type { Note, OrganizeMode } from "../lib/types.ts";
 
 const MindMap = lazy(() => import("./MindMap.tsx").then((m) => ({ default: m.MindMap })));
@@ -34,7 +35,10 @@ interface ExportTileProps {
 
 function ExportTile({ icon: Icon, color, label, desc, onClick }: ExportTileProps) {
   return (
-    <button className="export-tile card" onClick={() => void onClick()}>
+    <button
+      className="export-tile card"
+      onClick={() => Promise.resolve(onClick()).catch((err) => alert(`Esportazione non riuscita: ${err instanceof Error ? err.message : err}`))}
+    >
       <span className={`tile-ic ${color}`}>
         <Icon size={20} />
       </span>
@@ -187,7 +191,8 @@ export function NoteEditor({ initial, config, onBack, onDelete }: Props) {
             </button>
             {!config.aiAvailable && (
               <p className="msg error">
-                <TriangleAlert size={18} /> AI non configurata sul server (ANTHROPIC_API_KEY).
+                <TriangleAlert size={18} />{" "}
+                {isNative ? "Inserisci la chiave Claude nelle Impostazioni (icona ingranaggio nella home)." : "AI non configurata sul server (ANTHROPIC_API_KEY)."}
               </p>
             )}
             {error && (

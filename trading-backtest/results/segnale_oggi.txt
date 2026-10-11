@@ -1,6 +1,7 @@
 Ultimo dato: 2026-10-09  S&P 500 7,811.54  VIX 14.84  media 200g 7,250.63  VIX medio 20g 15.65
 Filtro trend (indice sopra la media 200g): SÌ
 Filtro VIX calmo (VIX ≤ 1,1 x media 20g):  SÌ
+Regola attiva: trend
 
 => INGRESSO: vendi un put spread XSP con scadenza 2026-10-30 (circa 3 settimane)
    VENDI  put XSP strike 760   (SPX equivalente 7600)
@@ -8,6 +9,6 @@ Filtro VIX calmo (VIX ≤ 1,1 x media 20g):  SÌ
    Premio stimato dal modello: 1.94 punti (= $194 a spread)
    Premio MINIMO da accettare: 1.60 punti; se il broker offre meno, non entrare
    Perdita massima per spread: circa $1,440
-   Contratti con rischio massimo $1,000: 0  (alza il rischio o salta)
+   Contratti con rischio massimo $1,500: 1
    Uscita: tieni fino a scadenza (regolamento in contanti), nessuno stop.
    Guadagno se a scadenza XSP > 760; perdita piena se < 744.

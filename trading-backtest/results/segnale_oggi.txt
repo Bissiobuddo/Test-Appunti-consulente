@@ -12,3 +12,7 @@ Regola attiva: trend
    Contratti con rischio massimo $1,500: 1
    Uscita: tieni fino a scadenza (regolamento in contanti), nessuno stop.
    Guadagno se a scadenza XSP > 760; perdita piena se < 744.
+
+=== Strategia Rimbalzo (S&P 500) ===
+Ultimo dato: 2026-10-09  SPY 778.57  RSI(2) 72.7  media 200g 722.93
+=> Nessun segnale: esposizione base 1x (o liquidità, se usi solo i rimbalzi).

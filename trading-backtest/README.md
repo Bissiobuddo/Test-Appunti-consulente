@@ -160,8 +160,9 @@ sempre sopra la volatilità che si è poi verificata. Chi le vende incassa quest
 coincidenza trovata nei dati.
 
 **Le regole:**
-1. Si entra solo se l'S&P 500 è sopra la sua media a 200 giorni e il VIX non sta salendo
-   (VIX ≤ 1,1 volte la sua media a 20 giorni).
+1. Si entra solo se l'S&P 500 è sopra la sua media a 200 giorni. Alcuni anni il
+   walk-forward ha aggiunto un secondo filtro: VIX non in salita, cioè VIX ≤ 1,1 volte la
+   sua media a 20 giorni.
 2. Si **vende** una put con scadenza circa 3 settimane, circa 0,75 volatilità sotto il prezzo
    (in genere 2-4% sotto).
 3. Si **compra** una put il 2% più in basso. Questo fissa la perdita massima: niente margin
@@ -172,13 +173,13 @@ coincidenza trovata nei dati.
 
 **Validazione:**
 - 675 combinazioni;
-- dati S&P 500 e VIX dal 1990 al 2022, che includono il 2000-2002, il 2008, il crollo Covid
-  del 2020 e il 2022;
+- dati S&P 500 e VIX dal 1990 a ottobre 2026, che includono il 2000-2002, il 2008, il crollo
+  Covid del 2020 e il 2022;
 - ogni anno la regola è scelta usando **solo gli anni precedenti**.
 
 Il walk-forward ha scelto quasi sempre la stessa regola, ed è un buon segno di robustezza.
 
-### Risultati fuori campione (1995-2022)
+### Risultati fuori campione (1995-2026)
 
 | | Valore |
 |---|---|
@@ -186,7 +187,7 @@ Il walk-forward ha scelto quasi sempre la stessa regola, ed è un buon segno di 
 | Operazioni con almeno +10% sul capitale a rischio | 69% |
 | Guadagno tipico quando va bene | **+11%** in ≤ 3 settimane |
 | Perdita media quando va male | **−66%** del capitale a rischio |
-| Rendimento medio per operazione | +3,0% |
+| Rendimento medio per operazione | +3,2% |
 | Operazioni per anno | circa 13 |
 
 **Quanto dipende dalle ipotesi sul prezzo delle opzioni?** Non ho uno storico dei prezzi
@@ -195,8 +196,8 @@ scenari:
 
 | Scenario | In guadagno | Rendimento medio per operazione |
 |---|---|---|
-| Ottimista | 89% | +5,9% |
-| **Base (già prudente)** | **89%** | **+3,0%** |
+| Ottimista | 90% | +6,1% |
+| **Base (già prudente)** | **89%** | **+3,2%** |
 | Pessimista (opzioni più economiche, costi più alti) | 91% | +0,1% |
 
 Il 90% di successo regge in tutti gli scenari. Il **guadagno medio invece è sottile**: con
@@ -209,21 +210,30 @@ Il 90% vale **per singola operazione**. In un anno ne fai circa 13, e la probabi
 superarle tutte senza perdite è 0,9^13 ≈ 25%. Le perdite, quando arrivano, mangiano due terzi
 della puntata.
 
-Simulazione del periodo 1995-2022 partendo da 5.000 € e reinvestendo:
+Simulazione del periodo 1995-2026 partendo da 5.000 € e reinvestendo:
 
-| Rischio per operazione | Capitale finale | Calo massimo | Anni in perdita | Anno peggiore |
+| Rischio per operazione | Capitale finale | Rendimento annuo | Calo massimo | Anni in perdita |
 |---|---|---|---|---|
-| **100% (tutti i 5.000 €)** | **0 €: conto azzerato** | −100% | 12/27 | −100% |
-| 50% | 40.800 € | −93% | 11/27 | −68% |
-| 33% | 60.900 € | −75% | 10/27 | −46% |
-| **20%** | **34.200 €** | **−52%** | 9/27 | −28% |
+| **100% (tutti i 5.000 €)** | **0 €: conto azzerato** | — | −100% | 14/31 |
+| 50% | 16.800 € | +4,0% | −99% | 13/31 |
+| 33% | 43.900 € | +7,3% | −90% | 12/31 |
+| **20%** | **30.800 €** | **+6,0%** | **−70%** | 11/31 |
+| *Confronto: tenere l'S&P 500* | | *+9,3% (senza dividendi)* | | |
+
+**Il test più severo: 2023-2026.** Questi anni sono arrivati dopo aver scritto la strategia,
+quindi sono davvero nuovi. Su 56 operazioni il 88% è andato in guadagno, ma il risultato
+netto è stato circa **zero** (+270 € rischiando 5.000 € a operazione).
 
 **Conclusione onesta:**
-- Puntando tutto ogni volta vedi "+10% in 3 settimane" quasi sempre, ma prima o poi il conto
-  si azzera.
-- Con un rischio sensato (circa 20% a operazione, cioè 1 contratto XSP con 5.000 €) il
-  risultato di lungo periodo è circa **+7-10% l'anno**, simile all'indice, con oscillazioni forti.
-- È una strategia vera e con una logica economica, ma non è una macchina da soldi.
+- La parte "probabilità alta" funziona: circa 9 operazioni su 10 chiudono in guadagno, con
+  circa +11% in 3 settimane.
+- Puntando tutto ogni volta, prima o poi il conto si azzera.
+- Con un rischio sensato, nel lungo periodo ha reso **meno che comprare e tenere l'indice**,
+  con cali più profondi.
+- Il vantaggio esiste ma è sottile, e negli ultimi anni è quasi sparito.
+
+È la dimostrazione concreta di una regola generale: un'alta probabilità di vincere non
+significa guadagnare.
 
 ---
 
@@ -274,7 +284,7 @@ L'integrazione corretta è al contrario: portare la strategia dentro TradingView
 ```bash
 pip install -r requirements.txt
 python3 dati.py aggiorna     # scarica i prezzi aggiornati
-python3 segnale.py 1000      # segnale di oggi con rischio massimo $1.000
+python3 segnale.py 1500      # segnale di oggi con rischio massimo $1.500
 ```
 
 `segnale.py` ti dice se oggi si entra e, se sì, cosa fare:

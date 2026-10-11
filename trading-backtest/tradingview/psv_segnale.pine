@@ -11,7 +11,7 @@ sma200   = ta.sma(close, 200)
 vixMedia = ta.sma(vix, 20)
 trend    = close > sma200
 calmo    = vix <= 1.1 * vixMedia
-segnale  = trend and calmo
+segnale  = trend  // il walk-forward più recente usa solo il trend; per la versione prudente: trend and calmo
 
 k1 = close * math.exp(-z * vix / 100 * math.sqrt(21.0 / 365))
 k2 = k1 - wPct * close

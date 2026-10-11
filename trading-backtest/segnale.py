@@ -9,7 +9,7 @@ Strumento consigliato: opzioni XSP (Mini-SPX, 1/10 dell'S&P 500): europee,
 regolate in contanti, niente assegnazione anticipata, contratti piccoli adatti a
 un conto da 5.000 €. Le stesse regole valgono per SPX (strike x10).
 
-Uso:  python3 segnale.py [rischio_per_operazione_in_dollari]   (default 1000)
+Uso:  python3 segnale.py [rischio_per_operazione_in_dollari]   (default 1500)
 """
 from __future__ import annotations
 
@@ -22,12 +22,12 @@ import opzioni as o
 
 # Regola scelta dal walk-forward più recente (vedi results/psv_scelte_walkforward.csv).
 # Se rilanci opzioni.py con dati nuovi e la regola cambia, aggiorna qui.
-Z, W_PCT, FILTRO = 0.75, 0.02, "trend_vix_calmo"
+Z, W_PCT, FILTRO = 0.75, 0.02, "trend"
 GIORNI_MAX_DATI = 4  # oltre questo ritardo i dati sono vecchi: non si opera
 
 
 def main():
-    rischio = float(sys.argv[1]) if len(sys.argv) > 1 else 1000.0
+    rischio = float(sys.argv[1]) if len(sys.argv) > 1 else 1500.0
     df = o.carica()
     oggi = df.iloc[-1]
     data = df.index[-1]
@@ -38,11 +38,10 @@ def main():
         print(f"ATTENZIONE: i dati hanno {ritardo} giorni. Aggiorna con `python3 dati.py aggiorna` "
               f"prima di operare: il calcolo qui sotto è solo dimostrativo.")
 
-    trend = oggi.S > oggi.sma200
-    calmo = oggi.vix <= 1.1 * oggi.vix_media
-    print(f"Filtro trend (indice sopra la media 200g): {'SÌ' if trend else 'NO'}")
-    print(f"Filtro VIX calmo (VIX ≤ 1,1 x media 20g):  {'SÌ' if calmo else 'NO'}")
-    if not (trend and calmo):
+    print(f"Filtro trend (indice sopra la media 200g): {'SÌ' if oggi.S > oggi.sma200 else 'NO'}")
+    print(f"Filtro VIX calmo (VIX ≤ 1,1 x media 20g):  {'SÌ' if oggi.vix <= 1.1 * oggi.vix_media else 'NO'}")
+    print(f"Regola attiva: {FILTRO}")
+    if not o.filtro(df, FILTRO)[-1]:
         print("\n=> OGGI NESSUN INGRESSO. Si riprova domani.")
         return
 

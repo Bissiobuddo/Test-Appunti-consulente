@@ -16,6 +16,7 @@ Uso:
     python3 dati.py aggiorna              # aggiorna tutti i mercati usati dai backtest
     python3 dati.py fondamentali AAPL     # salva i fondamentali di una società
     python3 dati.py ricerca               # universo ampio per la ricerca di correlazioni
+    python3 dati.py ricerca SPY ^IRX      # solo alcuni simboli dell'universo
     python3 dati.py eventi                # calendari delle riunioni Fed (pagine originali)
 
 Se una fonte non risponde, il file esistente resta com'è: i backtest
@@ -69,12 +70,14 @@ def nome_file(simbolo: str) -> str:
     return "".join(c if c.isalnum() else "_" for c in simbolo.lstrip("^")).lower() + ".csv"
 
 
-def ricerca() -> int:
+def ricerca(solo: list[str] | None = None) -> int:
     cartella = os.path.join(DATA, "ricerca")
     os.makedirs(cartella, exist_ok=True)
     errori = 0
     for fonte, simboli in (("yahoo", RICERCA_YAHOO), ("binance", RICERCA_BINANCE)):
         for s in simboli:
+            if solo and s not in solo:
+                continue
             try:
                 if fonte == "yahoo":
                     import yfinance as yf
@@ -221,7 +224,7 @@ if __name__ == "__main__":
     if comando == "aggiorna":
         sys.exit(1 if aggiorna() == len(MERCATI) else 0)
     elif comando == "ricerca":
-        ricerca()
+        ricerca(sys.argv[2:] or None)
     elif comando == "eventi":
         eventi()
     elif comando == "fondamentali" and len(sys.argv) > 2:

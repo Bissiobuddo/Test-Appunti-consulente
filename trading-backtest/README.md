@@ -279,12 +279,103 @@ L'integrazione corretta è al contrario: portare la strategia dentro TradingView
 
 ---
 
+# Parte 4 — Ricerca di correlazioni: si può battere l'indice nel breve?
+
+**Sì, ma di poco, e non con gli effetti che "tutti conoscono".** Ho cercato in modo
+sistematico quali eventi e indicatori anticipano i movimenti di prezzo (`ricerca.py`).
+
+**Cosa ho incrociato:**
+- **29 mercati:** S&P 500, Nasdaq, Russell, 9 settori USA, Europa, DAX, FTSE MIB, Nikkei,
+  emergenti, Treasury, obbligazioni societarie ad alto rendimento (high yield), oro,
+  petrolio, Bitcoin, Ethereum;
+- **47 indicatori:**
+  - movimenti recenti del prezzo, RSI, distanza dalle medie, massimi e minimi;
+  - VIX e la sua struttura a termine (VIX9D, VIX3M), VVIX;
+  - tassi e curva dei rendimenti, dollaro, credito, rapporto rame/oro, quanti settori sono in salita;
+  - calendario: giorno della settimana, fine/inizio mese, settembre, "sell in May",
+    settimana delle scadenze, prefestivi, **date delle riunioni Fed** (prese dal sito
+    ufficiale della Fed);
+- **3 orizzonti:** 1, 5 e 15 sedute.
+
+**Metodo anti-illusione:**
+1. Scoperta sui dati fino al 2012.
+2. Correzione per il numero di test fatti (Benjamini-Hochberg).
+3. Verifica sul 2013-2026, mai usato prima.
+4. Gli indicatori di altri mercati sono ritardati di un giorno, per non usare informazioni
+   non ancora disponibili.
+
+| | Numero |
+|---|---|
+| Test eseguiti | 3.522 |
+| "Significativi" senza correzione | 414 (ne aspetteremmo 176 per puro caso) |
+| Sopravvissuti alla correzione | 35 |
+| **Confermati nel 2013-2026** | **19** |
+
+### Cosa è emerso
+
+| Effetto | Prima del 2013 | 2013-2026 | Verdetto |
+|---|---|---|---|
+| **Rimbalzo dopo cali brevi** (RSI(2) basso, 3+ giorni di calo) su S&P 500, finanziari, beni di consumo di base | forte | **si ripete** | ✅ unico effetto robusto |
+| Vigilia delle riunioni Fed (S&P 500: +0,29% al giorno contro +0,03% normale) | fortissimo | +0,07% contro +0,05% | ❌ sparito dopo la pubblicazione (2011) |
+| Fine/inizio mese (+0,10% contro +0,02%) | presente | +0,04% contro +0,05% | ❌ sparito |
+| VIX a breve sopra quello a 3 mesi → rialzi nei 5-15 giorni dopo (+0,97% contro +0,07% a 5 giorni) | dati insufficienti (VIX3M dal 2007) | forte | 🟡 promettente, non ancora provato |
+| Trend 200 giorni, momentum, credito, tassi, dollaro, settembre, giorno della settimana | — | — | ❌ nessun potere previsivo affidabile nel breve |
+| Crypto (weekend, momentum, RSI) | — | — | ❌ nulla di confermato |
+
+Gli effetti famosi, una volta pubblicati e sfruttati da tutti, si esauriscono.
+Sopravvive quello che ha una ragione strutturale. Nel caso del rimbalzo, è chi vende in
+fretta nei momenti di paura e chi fornisce liquidità in quei momenti.
+
+## 8. Strategia "Rimbalzo" (`rimbalzo.py`)
+
+**Regola**, scelta solo sui dati 1993-2012:
+- **compra** l'S&P 500 alla chiusura quando RSI(2) < 10 e l'indice è sopra la media a 200 giorni;
+- **esci** quando RSI(2) > 70 oppure dopo 5 sedute.
+
+**Le operazioni da sole** (2013-2026, mai viste): 120 operazioni di pochi giorni.
+- **75% in guadagno**;
+- guadagno medio +0,50% e mediano +0,81%;
+- peggiore −6%.
+
+Sono operazioni brevi davvero profittevoli, ma piccole. Dato che si è investiti solo il 12%
+del tempo, da sole rendono meno dell'indice.
+
+**Il modo giusto di usarla:** stare sempre investiti sull'indice (1x) e **aumentare
+l'esposizione a 2-3x solo durante i rimbalzi**.
+
+Risultati 2013-2026, mai visti dalla regola:
+
+| | Rendimento annuo | Calo massimo | Anni sopra SPY |
+|---|---|---|---|
+| Compra e tieni SPY | +15,1% | −34% | — |
+| **Indice + rimbalzo a 2x** | **+18,4%** | −37% | 9 su 14 |
+| Confronto equo: SPY sempre a leva 1,12x | +16,0% | −37% | |
+| **Indice + rimbalzo a 3x** | **+21,4%** | −42% | 9 su 14 |
+| Confronto equo: SPY sempre a leva 1,25x | +17,1% | −41% | |
+
+Il confronto equo usa la stessa leva media della strategia. Il vantaggio dovuto al
+segnale, e non alla leva, è di **circa +2,5% / +4% l'anno**. Si è visto anche nel
+1993-2012: +16,7% contro +8,0%.
+
+**Strumenti, per chi vive in Italia:**
+- la base 1x in un ETF UCITS sull'S&P 500;
+- l'esposizione in più durante i segnali con un CFD sull'S&P 500 (US500), che si può
+  operare alla chiusura USA (22:00 italiane);
+- il test include già i costi di finanziamento (tasso + 2,5% annuo).
+
+**Cosa significa con 5.000 €:** circa +1.070 € l'anno invece di +755 €, con cali
+temporanei fino al 40%. È un vantaggio reale e misurato, ma è lontano da "raddoppiare in 3
+settimane": quell'obiettivo resta fuori portata (Parte 1).
+
+---
+
 # Come si usa
 
 ```bash
 pip install -r requirements.txt
 python3 dati.py aggiorna     # scarica i prezzi aggiornati
-python3 segnale.py 1500      # segnale di oggi con rischio massimo $1.500
+python3 segnale.py 1500      # segnale PSV di oggi con rischio massimo $1.500
+python3 rimbalzo.py oggi     # segnale Rimbalzo di oggi
 ```
 
 `segnale.py` ti dice se oggi si entra e, se sì, cosa fare:
@@ -303,6 +394,9 @@ Per rifare tutti i test:
 python3 backtest.py      # parte 1: raddoppio            (~15 s)
 python3 strategia.py     # tentativo TVA                  (~30 s)
 python3 opzioni.py       # strategia PSV + robustezza     (~2 min)
+python3 dati.py ricerca  # scarica i 49 mercati (serve rete) e `dati.py eventi` per la Fed
+python3 ricerca.py       # ricerca di correlazioni        (~30 s)
+python3 rimbalzo.py      # strategia Rimbalzo             (~2 s)
 ```
 
 I dati in `data/` vengono da fonti pubbliche: Coin Metrics, datasets/oil-prices,

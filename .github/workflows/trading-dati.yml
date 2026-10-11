@@ -32,13 +32,19 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Scarica dati
         run: python dati.py aggiorna
-      - name: Universo per la ricerca di correlazioni ed eventi
+      - name: Universo per la ricerca di correlazioni ed eventi (completo il lunedì)
         continue-on-error: true
         run: |
-          python dati.py ricerca
-          python dati.py eventi
+          if [ "$(date +%u)" = 1 ] || [ "${{ github.event_name }}" != "schedule" ]; then
+            python dati.py ricerca
+            python dati.py eventi
+          else
+            python dati.py ricerca SPY ^IRX
+          fi
       - name: Segnale del giorno
-        run: python segnale.py | tee results/segnale_oggi.txt
+        run: |
+          python segnale.py | tee results/segnale_oggi.txt
+          python rimbalzo.py oggi | tee -a results/segnale_oggi.txt
       - name: Salva dati aggiornati
         run: |
           git config user.name "github-actions[bot]"

@@ -1,0 +1,25 @@
+//@version=6
+// Strategia PSV: segnale di ingresso e strike del put spread, da applicare al grafico
+// giornaliero di SP:SPX (oppure CBOE:XSP). Stesse regole di segnale.py.
+indicator("PSV - put spread S&P 500", overlay = true)
+
+z     = input.float(0.75, "Distanza strike venduto (in sigma)", step = 0.05)
+wPct  = input.float(2.0, "Larghezza spread (% dell'indice)", step = 0.5) / 100
+
+vix      = request.security("TVC:VIX", "D", close)
+sma200   = ta.sma(close, 200)
+vixMedia = ta.sma(vix, 20)
+trend    = close > sma200
+calmo    = vix <= 1.1 * vixMedia
+segnale  = trend and calmo
+
+k1 = close * math.exp(-z * vix / 100 * math.sqrt(21.0 / 365))
+k2 = k1 - wPct * close
+
+plot(sma200, "Media 200 giorni", color = color.gray)
+plot(segnale ? k1 : na, "Strike venduto", color = color.orange, style = plot.style_circles, linewidth = 2)
+plot(segnale ? k2 : na, "Strike comprato", color = color.red, style = plot.style_circles, linewidth = 2)
+bgcolor(segnale ? color.new(color.green, 90) : na)
+
+alertcondition(segnale, "PSV ingresso",
+     "PSV: ingresso. Vendi put {{plot(\"Strike venduto\")}}, compra put {{plot(\"Strike comprato\")}}, scadenza ~3 settimane")

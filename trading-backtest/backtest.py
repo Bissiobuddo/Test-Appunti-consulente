@@ -65,10 +65,13 @@ def signals(p: pd.Series, bars_week: int) -> dict[str, np.ndarray]:
     return {k: np.asarray(v, bool) for k, v in sig.items()}
 
 
-def simulate(prices: np.ndarray, entries: np.ndarray, sigma: np.ndarray, direction: int,
-             lev: float, stop: float, horizon: int, target: float, cost: float, carry: float,
-             rng: np.random.Generator):
-    """Restituisce (successi, equity finali) per ogni ingresso valido.
+def simulate_paths(prices: np.ndarray, entries: np.ndarray, sigma: np.ndarray, direction: int,
+                   lev, stop, horizon: int, target: float, cost: float, carry: float,
+                   rng: np.random.Generator) -> dict:
+    """Simula un'operazione per ogni ingresso valido.
+
+    `lev` e `stop` (livello di equity a cui si esce, 0 = liquidazione) possono
+    essere un numero oppure un array lungo quanto `prices` (valore per barra).
 
     I dati sono solo prezzi di chiusura: per non ignorare i movimenti dentro la
     barra (le "spike" che liquidano le posizioni a leva) si usa la probabilità
@@ -78,13 +81,16 @@ def simulate(prices: np.ndarray, entries: np.ndarray, sigma: np.ndarray, directi
     """
     idx = np.flatnonzero(entries & np.isfinite(sigma))
     idx = idx[idx + horizon < len(prices)]
+    empty = np.array([])
     if len(idx) == 0:
-        return np.array([], bool), np.array([])
+        return dict(idx=idx.astype(int), success=empty.astype(bool), final=empty,
+                    exit=idx.astype(int))
+    per_bar = lambda v: np.asarray(v, float)[idx][:, None] if np.ndim(v) else float(v)
+    lev, floor = per_bar(lev), np.maximum(per_bar(stop), 0.0)
     steps = np.arange(1, horizon + 1)
     ratio = prices[idx[:, None] + steps[None, :]] / prices[idx, None]
     drag = lev * cost + lev * carry * steps[None, :]
     eq = 1 + direction * lev * (ratio - 1) - drag
-    floor = max(stop, 0.0)
 
     lr = np.log(ratio)
     prev = np.hstack([np.zeros((len(idx), 1)), lr[:, :-1]])
@@ -108,9 +114,16 @@ def simulate(prices: np.ndarray, entries: np.ndarray, sigma: np.ndarray, directi
     t_out = np.where(out.any(1), out.argmax(1), big)
     success = t_hit < t_out
     stopped = ~success & (t_out <= horizon - 1)
-    final = np.where(success, target,
-                     np.where(stopped, floor, np.clip(eq[:, -1], 0, None)))
-    return success, final
+    floor_v = np.broadcast_to(floor, (len(idx), 1))[:, 0]
+    final = np.where(success, target, np.where(stopped, floor_v, np.clip(eq[:, -1], 0, None)))
+    exit_bar = idx + 1 + np.minimum(np.minimum(t_hit, t_out), horizon - 1)
+    return dict(idx=idx, success=success, final=final, exit=exit_bar)
+
+
+def simulate(*args, **kwargs):
+    """Restituisce (successi, equity finali) per ogni ingresso valido."""
+    r = simulate_paths(*args, **kwargs)
+    return r["success"], r["final"]
 
 
 def run_asset(name: str, target: float) -> pd.DataFrame:

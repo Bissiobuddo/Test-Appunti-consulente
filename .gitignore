@@ -5,3 +5,4 @@ dev-dist
 *.log
 android/app/build
 android/.gradle
+__pycache__/

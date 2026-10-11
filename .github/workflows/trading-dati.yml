@@ -1,0 +1,43 @@
+name: Trading - aggiorna dati e segnale
+
+# Il sandbox di Claude non può scaricare dati di mercato, i runner di GitHub sì.
+# Questo workflow aggiorna trading-backtest/data/*.csv, calcola il segnale del
+# giorno e salva il risultato in trading-backtest/results/segnale_oggi.txt.
+on:
+  push:
+    branches: [ccr-cd3ce267-g5a3yt]
+    paths: ["trading-backtest/**", ".github/workflows/trading-dati.yml"]
+  schedule:
+    - cron: "40 21 * * 1-5"   # dopo la chiusura di Wall Street (vale solo sul branch principale)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: trading-dati-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  aggiorna:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: trading-backtest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Scarica dati
+        run: python dati.py aggiorna
+      - name: Segnale del giorno
+        run: python segnale.py | tee results/segnale_oggi.txt
+      - name: Salva dati aggiornati
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data results/segnale_oggi.txt
+          git diff --cached --quiet || git commit -m "Dati di mercato e segnale aggiornati"
+          git push

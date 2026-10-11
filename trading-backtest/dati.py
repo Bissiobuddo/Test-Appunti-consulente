@@ -15,6 +15,8 @@ Uso:
     pip install yfinance pandas
     python3 dati.py aggiorna              # aggiorna tutti i mercati usati dai backtest
     python3 dati.py fondamentali AAPL     # salva i fondamentali di una società
+    python3 dati.py ricerca               # universo ampio per la ricerca di correlazioni
+    python3 dati.py eventi                # calendari delle riunioni Fed (pagine originali)
 
 Se una fonte non risponde, il file esistente resta com'è: i backtest
 continuano a funzionare con i dati già salvati.
@@ -43,6 +45,75 @@ MERCATI = {
     "eth.csv": ("binance", "ETHUSDT"),
     "brent.csv": ("yahoo", "BZ=F"),
 }
+
+
+# Universo per la ricerca di correlazioni (data/ricerca/<nome>.csv)
+RICERCA_YAHOO = [
+    # indici e ETF azionari (gli ETF hanno anche "adj close" = con dividendi)
+    "^GSPC", "^NDX", "^RUT", "^DJI", "SPY", "QQQ", "IWM", "DIA",
+    "XLK", "XLF", "XLE", "XLV", "XLY", "XLP", "XLI", "XLU", "XLB",
+    "EFA", "EEM", "^STOXX50E", "^GDAXI", "FTSEMIB.MI", "^N225",
+    # obbligazioni, credito, dollaro
+    "TLT", "IEF", "HYG", "LQD", "UUP",
+    # volatilità e sua struttura a termine
+    "^VIX", "^VIX9D", "^VIX3M", "^VVIX",
+    # tassi
+    "^IRX", "^FVX", "^TNX", "^TYX",
+    # cambi e materie prime
+    "DX-Y.NYB", "EURUSD=X", "USDJPY=X", "GC=F", "SI=F", "CL=F", "HG=F", "NG=F",
+]
+RICERCA_BINANCE = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT"]
+
+
+def nome_file(simbolo: str) -> str:
+    return "".join(c if c.isalnum() else "_" for c in simbolo.lstrip("^")).lower() + ".csv"
+
+
+def ricerca() -> int:
+    cartella = os.path.join(DATA, "ricerca")
+    os.makedirs(cartella, exist_ok=True)
+    errori = 0
+    for fonte, simboli in (("yahoo", RICERCA_YAHOO), ("binance", RICERCA_BINANCE)):
+        for s in simboli:
+            try:
+                if fonte == "yahoo":
+                    import yfinance as yf
+                    df = yf.download(s, start="1985-01-01", interval="1d", auto_adjust=False,
+                                     progress=False, multi_level_index=False)
+                    df = df.rename(columns=str.lower)
+                    df.index = pd.to_datetime(df.index).tz_localize(None)
+                else:
+                    df = binance(s)
+                if df.empty:
+                    raise RuntimeError("nessun dato")
+                df.index.name = "date"
+                df.to_csv(os.path.join(cartella, nome_file(s)))
+                print(f"OK  {s:12s} {df.index[0].date()} -> {df.index[-1].date()} ({len(df)} righe)")
+            except Exception as e:
+                errori += 1
+                print(f"ERR {s:12s} {type(e).__name__}: {e}")
+    return errori
+
+
+def eventi() -> int:
+    """Salva le pagine ufficiali con le date delle riunioni FOMC (la Fed)."""
+    cartella = os.path.join(DATA, "eventi", "fomc")
+    os.makedirs(cartella, exist_ok=True)
+    pagine = {"calendario.html": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"}
+    for anno in range(1990, 2021):
+        pagine[f"storico_{anno}.html"] = (
+            f"https://www.federalreserve.gov/monetarypolicy/fomchistorical{anno}.htm")
+    errori = 0
+    for file, url in pagine.items():
+        try:
+            with open(os.path.join(cartella, file), "wb") as f:
+                f.write(_get(url))
+            time.sleep(0.3)
+        except Exception as e:
+            errori += 1
+            print(f"ERR {file}: {e}")
+    print(f"Pagine FOMC salvate: {len(pagine) - errori}/{len(pagine)}")
+    return errori
 
 
 def _get(url: str, timeout: int = 30) -> bytes:
@@ -149,6 +220,10 @@ if __name__ == "__main__":
     comando = sys.argv[1] if len(sys.argv) > 1 else "aggiorna"
     if comando == "aggiorna":
         sys.exit(1 if aggiorna() == len(MERCATI) else 0)
+    elif comando == "ricerca":
+        ricerca()
+    elif comando == "eventi":
+        eventi()
     elif comando == "fondamentali" and len(sys.argv) > 2:
         dati = fondamentali(sys.argv[2])
         print(f"Salvati in data/fondamentali/{sys.argv[2]}.json: {', '.join(dati)}")

@@ -3,6 +3,9 @@ name: App Android (APK)
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "notizie/**"
+      - ".github/workflows/notizie-android.yml"
   workflow_dispatch:
 
 permissions:

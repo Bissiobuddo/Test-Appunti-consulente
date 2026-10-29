@@ -1,0 +1,74 @@
+name: Notizie Chiare – App Android (APK)
+
+on:
+  push:
+    paths:
+      - "notizie/**"
+      - ".github/workflows/notizie-android.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: notizie-android-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: notizie
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: notizie/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Build web app
+        run: |
+          npm ci
+          npm test
+          npm run build
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Build APK
+        working-directory: notizie/android
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Rename APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk NotizieChiare-1.0.${{ github.run_number }}.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NotizieChiare-apk
+          path: notizie/NotizieChiare-*.apk
+
+      - name: Publish release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: notizie-v1.0.${{ github.run_number }}
+          name: Notizie Chiare 1.0.${{ github.run_number }}
+          make_latest: false
+          files: notizie/NotizieChiare-*.apk
+          body: |
+            APK di **Notizie Chiare** per Android. Scarica il file `.apk` qui sotto dal telefono e installalo
+            (Android chiederà di consentire l'installazione da questa fonte).
+            Al primo avvio apri ⚙️ Impostazioni e inserisci la chiave Claude.

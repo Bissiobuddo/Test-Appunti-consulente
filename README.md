@@ -8,6 +8,9 @@ Funziona in due modi:
 - **App Android (APK)**: si installa sul telefono e funziona da sola, senza server. Le chiavi API si inseriscono nelle Impostazioni dell'app e restano sul telefono.
 - **Sito web (PWA)**: lo pubblichi su un server e lo usi da computer o telefono, anche installandolo dal browser. Le chiavi stanno sul server.
 
+> 📰 Nella cartella [`notizie/`](notizie/README.md) c'è una seconda app, **Notizie Chiare**: riassume le notizie del giorno
+> per categoria confrontando le fonti, le spiega a chi non ha il contesto e le legge ad alta voce in auto.
+
 ## 📱 Installare l'app Android
 
 1. Dal telefono apri la pagina **Releases** di questo repository su GitHub e scarica l'ultimo file `AppuntiVocaliAI-….apk`.

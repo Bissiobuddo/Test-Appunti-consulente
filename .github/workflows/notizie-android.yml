@@ -60,12 +60,14 @@ jobs:
           name: NotizieChiare-apk
           path: notizie/NotizieChiare-*.apk
 
+      # Da main esce una versione stabile; dagli altri branch un'anteprima, per provare l'APK prima del merge.
       - name: Publish release
-        if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: notizie-v1.0.${{ github.run_number }}
-          name: Notizie Chiare 1.0.${{ github.run_number }}
+          tag_name: notizie-v1.0.${{ github.run_number }}${{ github.ref != 'refs/heads/main' && '-anteprima' || '' }}
+          name: Notizie Chiare 1.0.${{ github.run_number }}${{ github.ref != 'refs/heads/main' && ' (anteprima)' || '' }}
+          target_commitish: ${{ github.sha }}
+          prerelease: ${{ github.ref != 'refs/heads/main' }}
           make_latest: false
           files: notizie/NotizieChiare-*.apk
           body: |

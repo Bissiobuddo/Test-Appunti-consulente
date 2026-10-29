@@ -44,7 +44,7 @@ più volte entro 20 minuti non viene rigenerata.
 4. Tocca «Aggiorna».
 
 L'APK viene compilato da GitHub Actions (`.github/workflows/notizie-android.yml`) a ogni modifica della cartella `notizie/`
-e pubblicato nelle Releases quando la modifica arriva su `main`. Per la lettura ad alta voce usa la sintesi vocale di
+e pubblicato nelle Releases: come versione stabile quando la modifica arriva su `main`, come «anteprima» dagli altri branch. Per la lettura ad alta voce usa la sintesi vocale di
 Android: se non parla, controlla in *Impostazioni › Sintesi vocale* che sia installata la voce italiana.
 
 ## Avvio in locale

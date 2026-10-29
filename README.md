@@ -9,7 +9,7 @@ Funziona in due modi:
 - **Sito web (PWA)**: lo pubblichi su un server e lo usi da computer o telefono, anche installandolo dal browser. Le chiavi stanno sul server.
 
 > 📰 Nella cartella [`notizie/`](notizie/README.md) c'è una seconda app, **Notizie Chiare**: riassume le notizie del giorno
-> per categoria confrontando le fonti, le spiega a chi non ha il contesto e le legge ad alta voce in auto.
+> per categoria confrontando le fonti (anche senza AI, gratis), le spiega a chi non ha il contesto e le legge ad alta voce in auto.
 
 ## 📱 Installare l'app Android
 

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { BookOpen, Compass, GraduationCap, HelpCircle, Lightbulb, LoaderCircle, MessageCircleQuestion, Send, TriangleAlert } from "lucide-react";
+import { BookOpen, Compass, ExternalLink, GraduationCap, HelpCircle, Lightbulb, LoaderCircle, MessageCircleQuestion, Send, TriangleAlert } from "lucide-react";
 import type { Article } from "../../shared/feeds.ts";
 import type { CategoryDigest, Story } from "../../shared/schema.ts";
-import { ask, explain } from "../lib/api.ts";
+import { ask, explain, explainWithWikipedia } from "../lib/api.ts";
 import { loadSettings } from "../lib/settings.ts";
 import { loadExtras, saveExtras, storyKey, type StoryExtras } from "../lib/storage.ts";
 
@@ -40,7 +40,11 @@ export function ExplainPanel({ story, index, digest, articles }: Props) {
     }
   };
 
-  const onExplain = () => run("explain", async () => ({ ...extras, explanation: await explain(story, articles, loadSettings()) }));
+  const local = digest.engine === "locale";
+  const onExplain = () =>
+    run("explain", async () =>
+      local ? { ...extras, wiki: await explainWithWikipedia(articles) } : { ...extras, explanation: await explain(story, articles, loadSettings()) },
+    );
 
   const onAsk = () => {
     const q = question.trim();
@@ -56,14 +60,43 @@ export function ExplainPanel({ story, index, digest, articles }: Props) {
 
   return (
     <section className="explain">
-      {!e && (
+      {!e && !extras.wiki && (
         <button className="explain-btn" onClick={onExplain} disabled={busy !== null}>
           {busy === "explain" ? <LoaderCircle size={20} className="spin" /> : <GraduationCap size={20} />}
           <span>
-            <strong>{busy === "explain" ? "Preparo la spiegazione…" : "Spiegamelo"}</strong>
-            <small>Contesto, termini e cosa può cambiare, per chi parte da zero</small>
+            <strong>{busy === "explain" ? (local ? "Cerco su Wikipedia…" : "Preparo la spiegazione…") : "Spiegamelo"}</strong>
+            <small>{local ? "Chi sono le persone, le sigle e le istituzioni citate" : "Contesto, termini e cosa può cambiare, per chi parte da zero"}</small>
           </span>
         </button>
+      )}
+
+      {extras.wiki && (
+        <div className="explanation card">
+          <h3>
+            <BookOpen size={18} /> Chi e cosa
+          </h3>
+          {extras.wiki.length ? (
+            <dl>
+              {extras.wiki.map((w) => (
+                <div key={w.page}>
+                  <dt>
+                    {w.page}
+                    {w.page.toLowerCase() !== w.term.toLowerCase() && <small> ({w.term})</small>}
+                  </dt>
+                  <dd>
+                    {w.explanation}{" "}
+                    <a className="link" href={w.url} target="_blank" rel="noreferrer">
+                      Wikipedia <ExternalLink size={12} />
+                    </a>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <p>Non ho trovato voci di Wikipedia adatte per i nomi di questa notizia.</p>
+          )}
+          <p className="hint">Definizioni da Wikipedia in italiano (licenza CC BY-SA), cercate automaticamente: verifica che la voce sia quella giusta. Per contesto, implicazioni e domande libere attiva l'AI nelle impostazioni.</p>
+        </div>
       )}
 
       {e && (
@@ -128,7 +161,7 @@ export function ExplainPanel({ story, index, digest, articles }: Props) {
         </div>
       ))}
 
-      <form
+      {!local && <form
         className="ask-form"
         onSubmit={(ev) => {
           ev.preventDefault();
@@ -145,7 +178,7 @@ export function ExplainPanel({ story, index, digest, articles }: Props) {
         <button className="icon-btn send" disabled={busy !== null || !question.trim()} aria-label="Chiedi">
           {busy === "ask" ? <LoaderCircle size={18} className="spin" /> : <Send size={18} />}
         </button>
-      </form>
+      </form>}
 
       {error && (
         <p className="msg error">

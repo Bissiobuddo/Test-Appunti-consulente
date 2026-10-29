@@ -6,6 +6,7 @@ import { answerQuestion, buildCategoryDigest, explainStory, RefusalError, type S
 import { isCategory, type CustomFeed } from "../shared/sources.ts";
 import { DEFAULT_MODEL, isModel, type AskRequest, type CategoryDigest } from "../shared/schema.ts";
 import { fetchFeed } from "./fetchFeed.ts";
+import { buildLocalDigest } from "../shared/local.ts";
 
 try {
   process.loadEnvFile();
@@ -49,6 +50,7 @@ app.post("/api/digest", async (req, res, next) => {
       maxStories?: unknown;
       disabledSources?: unknown;
       customFeeds?: unknown;
+      engine?: unknown;
       force?: boolean;
     };
     if (!isCategory(body.category)) {
@@ -66,10 +68,14 @@ app.post("/api/digest", async (req, res, next) => {
       maxStories: Math.min(Math.max(Number(body.maxStories) || 8, 3), 15),
     };
 
-    const key = JSON.stringify([body.category, options, selection]);
+    // Senza AI non serve la chiave: il server legge solo i feed (il browser non può, per i vincoli CORS).
+    const local = body.engine === "locale";
+    const key = JSON.stringify([body.category, local ? "locale" : options, selection]);
     let pending = cache.get(key);
     if (!pending || body.force) {
-      pending = buildCategoryDigest(body.category, selection, options, fetchFeed);
+      pending = local
+        ? buildLocalDigest(body.category, selection, options.maxStories, fetchFeed)
+        : buildCategoryDigest(body.category, selection, options, fetchFeed);
       cache.set(key, pending);
       pending.then(
         () => setTimeout(() => cache.get(key) === pending && cache.delete(key), CACHE_MS),

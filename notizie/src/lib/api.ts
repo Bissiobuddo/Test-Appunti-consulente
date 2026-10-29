@@ -4,7 +4,8 @@ import { isNative } from "./platform.ts";
 import { loadSettings, type AppSettings } from "./settings.ts";
 import type { CategoryId } from "../../shared/sources.ts";
 import type { Article } from "../../shared/feeds.ts";
-import type { CategoryDigest, Explanation, Story } from "../../shared/schema.ts";
+import type { CategoryDigest, Engine, Explanation, Story } from "../../shared/schema.ts";
+import type { WikiTerm } from "../../shared/wikipedia.ts";
 
 export interface ServerConfig {
   authRequired: boolean;
@@ -76,11 +77,25 @@ async function native<T>(run: (mod: typeof import("../../shared/digest.ts"), cli
   }
 }
 
-export function loadCategory(category: CategoryId, s: AppSettings, force = false): Promise<CategoryDigest> {
+export async function loadCategory(category: CategoryId, s: AppSettings, engine: Engine): Promise<CategoryDigest> {
   const selection = { disabledSources: s.disabledSources, customFeeds: s.customFeeds };
   const options = { model: s.model, maxStories: s.maxStories };
+  if (isNative && engine === "locale") {
+    const { buildLocalDigest } = await import("../../shared/local.ts");
+    return buildLocalDigest(category, selection, s.maxStories, fetchTextNative);
+  }
   if (isNative) return native((m, client) => m.buildCategoryDigest(category, selection, options, fetchTextNative, client));
-  return request<CategoryDigest>("/api/digest", { category, ...selection, ...options, force });
+  return request<CategoryDigest>("/api/digest", { category, ...selection, ...options, engine });
+}
+
+/** Spiegazioni senza AI: nomi e sigle della notizia cercati su Wikipedia (che permette le richieste dal browser). */
+export async function explainWithWikipedia(articles: Article[]): Promise<WikiTerm[]> {
+  const { explainWithWikipedia: run } = await import("../../shared/wikipedia.ts");
+  return run(articles, async (url) => {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Wikipedia ${res.status}`);
+    return res.json();
+  });
 }
 
 export function explain(story: Story, articles: Article[], s: AppSettings): Promise<Explanation> {

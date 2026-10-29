@@ -14,7 +14,7 @@ import {
   Volume2,
 } from "lucide-react";
 import { CATEGORIES, categoryLabel, type CategoryId } from "../shared/sources.ts";
-import type { Story } from "../shared/schema.ts";
+import type { Engine, Story } from "../shared/schema.ts";
 import { StoryCard } from "./components/StoryCard.tsx";
 import { CarMode } from "./components/CarMode.tsx";
 import { Settings } from "./components/Settings.tsx";
@@ -139,6 +139,8 @@ export function App() {
   const loading = Object.values(status).some((s) => s === "loading");
   const newest = Math.max(0, ...Object.values(digests).map((d) => d.generatedAt));
   const stale = newest > 0 && Date.now() - newest > 4 * 3600_000;
+  // Senza una scelta esplicita si usa l'AI solo se c'è una chiave (sul telefono o sul server).
+  const engine: Engine = settings.engine ?? (config?.aiAvailable ? "ai" : "locale");
   const available = useMemo(() => CATEGORIES.filter((c) => digests[c.id] || settings.categories.includes(c.id)), [digests, settings.categories]);
 
   const refresh = async () => {
@@ -146,7 +148,7 @@ export function App() {
     setStatus(Object.fromEntries(cats.map((c) => [c, "loading"])));
     await inBatches(cats, PARALLEL, async (c) => {
       try {
-        const d = await loadCategory(c, settings);
+        const d = await loadCategory(c, settings, engine);
         digestsRef.current = { ...digestsRef.current, [c]: d };
         setDigests(digestsRef.current);
         await saveDigests(digestsRef.current);
@@ -185,6 +187,7 @@ export function App() {
   if (view === "settings") {
     return (
       <Settings
+        defaultEngine={engine}
         onClose={() => {
           setSettings(loadSettings());
           setView("home");
@@ -209,7 +212,9 @@ export function App() {
     );
   }
 
-  const canRefresh = config.aiAvailable && settings.categories.length > 0 && !loading;
+  // Sul web anche la modalità senza AI passa dal server, che legge i feed.
+  const serverOk = isNative || config !== OFFLINE;
+  const canRefresh = serverOk && (engine === "locale" || config.aiAvailable) && settings.categories.length > 0 && !loading;
   // Lo stesso errore su più categorie (es. niente rete) si mostra una volta sola.
   const errors = new Map<string, CategoryId[]>();
   for (const [c, st] of Object.entries(status) as [CategoryId, Status][]) {
@@ -233,7 +238,7 @@ export function App() {
         </button>
       </header>
 
-      {isNative && !config.aiAvailable && (
+      {isNative && engine === "ai" && !config.aiAvailable && (
         <button className="setup-banner card" onClick={() => setView("settings")}>
           <span className="box-icon ic-violet">
             <KeyRound size={17} />
@@ -250,7 +255,7 @@ export function App() {
           <CloudOff size={18} /> Server non raggiungibile: puoi consultare e ascoltare solo le notizie già salvate.
         </p>
       )}
-      {!isNative && config !== OFFLINE && !config.aiAvailable && (
+      {!isNative && engine === "ai" && config !== OFFLINE && !config.aiAvailable && (
         <p className="msg error">
           <KeyRound size={18} /> Sul server manca la chiave ANTHROPIC_API_KEY.
         </p>
@@ -374,7 +379,11 @@ export function App() {
           <p>
             <strong>Ancora nessuna rassegna</strong>
           </p>
-          <p>Tocca «Aggiorna»: l'AI legge le principali testate, confronta le fonti e riassume le notizie del giorno.</p>
+          <p>
+            {engine === "ai"
+              ? "Tocca «Aggiorna»: l'AI legge le principali testate, confronta le fonti e riassume le notizie del giorno."
+              : "Tocca «Aggiorna»: l'app legge le principali testate, raggruppa le notizie uguali e confronta le fonti. Gratis, senza AI."}
+          </p>
         </div>
       )}
     </div>

@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { ArrowLeft, Check, ExternalLink, LayoutGrid, Newspaper, Plus, Rss, ShieldCheck, Sparkles, Trash2, Volume2 } from "lucide-react";
+import { ArrowLeft, Check, Cpu, ExternalLink, LayoutGrid, Newspaper, Plus, Rss, ShieldCheck, Sparkles, Trash2, Volume2 } from "lucide-react";
 import { CATEGORIES, SOURCES, SOURCE_KIND_LABEL, type CategoryId } from "../../shared/sources.ts";
-import { MODELS } from "../../shared/schema.ts";
+import { MODELS, type Engine } from "../../shared/schema.ts";
 import { isNative } from "../lib/platform.ts";
 import { loadSettings, saveSettings, type AppSettings } from "../lib/settings.ts";
 import { speak, speechSupported } from "../lib/speech.ts";
@@ -9,8 +9,16 @@ import { speak, speechSupported } from "../lib/speech.ts";
 const STORY_COUNTS = [5, 8, 12];
 const RATES = [0.9, 1, 1.15, 1.3];
 
-export function Settings({ onClose }: { onClose: () => void }) {
-  const [s, setS] = useState<AppSettings>(loadSettings);
+const ENGINES: { id: Engine; label: string; hint: string }[] = [
+  { id: "locale", label: "Senza AI", hint: "Gratis, nessuna chiave. Raggruppa le notizie uguali, confronta le fonti e usa i sommari delle testate. Spiegazioni da Wikipedia." },
+  { id: "ai", label: "Con AI (Claude)", hint: "Riassunti scritti dall'AI, confronto più accurato, contesto, implicazioni e domande libere. Serve una chiave a pagamento." },
+];
+
+export function Settings({ onClose, defaultEngine }: { onClose: () => void; defaultEngine: Engine }) {
+  const [s, setS] = useState<AppSettings>(() => {
+    const saved = loadSettings();
+    return { ...saved, engine: saved.engine ?? defaultEngine };
+  });
   const set = (p: Partial<AppSettings>) => setS((prev) => ({ ...prev, ...p }));
   const [feed, setFeed] = useState({ name: "", url: "", category: "italia" as CategoryId });
 
@@ -25,7 +33,24 @@ export function Settings({ onClose }: { onClose: () => void }) {
         <h1 className="topbar-title">Impostazioni</h1>
       </header>
 
-      {isNative && (
+      <section className="card settings-card">
+        <h2>
+          <span className="box-icon ic-teal">
+            <Cpu size={17} />
+          </span>
+          Come preparare la rassegna
+        </h2>
+        <div className="mode-cards" role="radiogroup" aria-label="Modalità">
+          {ENGINES.map((e) => (
+            <button key={e.id} role="radio" aria-checked={s.engine === e.id} className={`mode-card ${s.engine === e.id ? "active" : ""}`} onClick={() => set({ engine: e.id })}>
+              <strong>{e.label}</strong>
+              <span>{e.hint}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {isNative && s.engine === "ai" && (
         <section className="card settings-card">
           <h2>
             <span className="box-icon ic-violet">
@@ -49,7 +74,7 @@ export function Settings({ onClose }: { onClose: () => void }) {
         </section>
       )}
 
-      <section className="card settings-card">
+      {s.engine === "ai" && <section className="card settings-card">
         <h2>
           <span className="box-icon ic-blue">
             <Sparkles size={17} />
@@ -64,7 +89,7 @@ export function Settings({ onClose }: { onClose: () => void }) {
             </button>
           ))}
         </div>
-      </section>
+      </section>}
 
       <section className="card settings-card">
         <h2>
@@ -203,7 +228,7 @@ export function Settings({ onClose }: { onClose: () => void }) {
       <p className="hint privacy">
         <ShieldCheck size={16} />
         {isNative
-          ? "La chiave resta salvata solo su questo telefono e viene inviata unicamente ad Anthropic. I feed vengono letti direttamente dai siti delle testate."
+          ? "La chiave resta salvata solo su questo telefono e viene inviata unicamente ad Anthropic. I feed vengono letti direttamente dai siti delle testate, le definizioni da Wikipedia."
           : "Le impostazioni restano in questo browser."}
       </p>
 

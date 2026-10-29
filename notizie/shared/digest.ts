@@ -63,7 +63,7 @@ export async function buildCategoryDigest(
   const generatedAt = Date.now();
   if (!articles.length) {
     if (failedSources.length) throw new Error("Nessuna fonte raggiungibile per questa categoria. Controlla la connessione.");
-    return { category, generatedAt, stories: [], articles: [], failedSources, articleCount: 0 };
+    return { category, engine: "ai", generatedAt, stories: [], articles: [], failedSources, articleCount: 0 };
   }
 
   const { stories } = await ask<{ stories: CategoryDigest["stories"] }>(
@@ -89,6 +89,7 @@ export async function buildCategoryDigest(
 
   return {
     category,
+    engine: "ai",
     generatedAt,
     stories: cleaned,
     articles: articles.filter((a) => cited.has(a.id)),

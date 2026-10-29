@@ -347,3 +347,5 @@ dd { margin: 2px 0 0; color: var(--muted); line-height: 1.5; }
   .car-controls .car-play { min-height: 96px; }
   .car-main h1 { -webkit-line-clamp: 3; }
 }
+.summary-src { font-style: normal; font-size: 0.8rem; opacity: 0.8; }
+.explanation dt small { font-weight: 450; color: var(--muted); }

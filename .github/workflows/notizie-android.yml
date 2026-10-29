@@ -73,4 +73,4 @@ jobs:
           body: |
             APK di **Notizie Chiare** per Android. Scarica il file `.apk` qui sotto dal telefono e installalo
             (Android chiederà di consentire l'installazione da questa fonte).
-            Al primo avvio apri ⚙️ Impostazioni e inserisci la chiave Claude.
+            Funziona subito, senza AI. Per i riassunti dell'AI: ⚙️ Impostazioni › «Con AI» e inserisci la chiave Claude.

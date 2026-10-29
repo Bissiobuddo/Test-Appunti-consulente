@@ -37,7 +37,10 @@ export function StoryCard({ story, index, digest, speaking, onListen }: Props) {
           {story.importance === "alta" && <span className="imp-badge">In evidenza</span>}
         </span>
         <strong className="story-title">{story.title}</strong>
-        <span className="story-summary">{story.summary}</span>
+        <span className="story-summary">
+          {story.summary}
+          {story.summary_source && <em className="summary-src"> — dal sommario di {story.summary_source}</em>}
+        </span>
         <span className="source-chips">
           {sourceNames(articles).map((n) => (
             <span key={n} className="source-chip">
@@ -133,7 +136,11 @@ export function StoryCard({ story, index, digest, speaking, onListen }: Props) {
               </li>
             ))}
           </ul>
-          <p className="hint">Riassunto e confronto sono generati dall'AI a partire da titoli e sommari: per i dettagli apri gli articoli.</p>
+          <p className="hint">
+            {digest.engine === "locale"
+              ? "Raggruppamento e confronto automatici, senza AI: il testo è il sommario pubblicato dalla testata. Per i dettagli apri gli articoli."
+              : "Riassunto e confronto sono generati dall'AI a partire da titoli e sommari: per i dettagli apri gli articoli."}
+          </p>
 
           <div className="row">
             <button className="btn-soft" onClick={onListen}>

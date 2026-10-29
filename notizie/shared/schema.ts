@@ -39,7 +39,13 @@ export const StorySchema = z.object({
   glossary: z.array(GlossaryEntry).describe("Termini poco chiari per chi non segue l'argomento; lista vuota se nessuno"),
 });
 
-export type Story = z.infer<typeof StorySchema>;
+export type Story = z.infer<typeof StorySchema> & {
+  /** Solo senza AI: la testata da cui è preso il sommario mostrato. */
+  summary_source?: string;
+};
+
+/** "ai": riassunti scritti da Claude; "locale": raggruppamento automatico, senza AI. */
+export type Engine = "ai" | "locale";
 
 export const CategorySummarySchema = z.object({
   stories: z.array(StorySchema).describe("Le notizie del giorno, dalla più rilevante"),
@@ -64,6 +70,8 @@ export const AnswerSchema = z.object({
 /** Le notizie di una categoria, con gli articoli citati (per mostrare e linkare le fonti). */
 export interface CategoryDigest {
   category: CategoryId;
+  /** Assente nelle rassegne salvate prima della modalità senza AI: erano fatte con l'AI. */
+  engine?: Engine;
   generatedAt: number;
   stories: Story[];
   articles: Article[];

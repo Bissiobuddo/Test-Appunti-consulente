@@ -1,7 +1,9 @@
 import { CATEGORY_IDS, type CategoryId, type CustomFeed } from "../../shared/sources.ts";
-import { DEFAULT_MODEL, type ModelId } from "../../shared/schema.ts";
+import { DEFAULT_MODEL, type Engine, type ModelId } from "../../shared/schema.ts";
 
 export interface AppSettings {
+  /** Con o senza AI; se non scelto, si usa l'AI solo quando c'è una chiave. */
+  engine?: Engine;
   /** Solo app Android: la chiave resta su questo dispositivo. */
   claudeKey: string;
   model: ModelId;
